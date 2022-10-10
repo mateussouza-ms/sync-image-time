@@ -1,142 +1,12 @@
-import child_process from "node:child_process";
-
-import * as fs from "fs";
 import path from "path";
-import piexif from "piexifjs";
-import { convertDateObjectToTextExifDate } from "./utils/convertDateObjectToTextExifDate.js";
-import { convertTextExifDateToDateObject } from "./utils/convertTextExifDateToDateObject.js";
-import { getDifferenceBetweenDates } from "./utils/getDifferenceBetweenDates.js";
 
-/**
- * Get list of files from directory
- * @param {string} dir
- * @returns {Promise<string[]>}
- */
-async function getFileListFromDirectory(dir) {
-  return new Promise((resolve, reject) => {
-    fs.readdir(dir, (error, files) => {
-      if (error) {
-        reject(
-          `Ocorreu um erro ao ler os arquivos da pasta '${dir}'. Erro: ${error}`
-        );
-      } else {
-        const filesPaths = files.map((fileName) => {
-          const filePath = path.resolve(`${dir}/${fileName}`);
-          return filePath;
-        });
+import { getDifferenceBetweenDates } from "./utils/dates/getDifferenceBetweenDates.js";
+import { changeImageCreationDate } from "./utils/files/changeImageCreationDate.js";
 
-        resolve(filesPaths);
-      }
-    });
-  });
-}
-
-/**
- *
- * @param {string} filePath
- * @returns {Promise<string>} Base64 Data
- */
-async function readFileAsBase64(filePath) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        const base64Data = `data:image/jpeg;base64,${Buffer.from(data).toString(
-          "base64"
-        )}`;
-
-        resolve(base64Data);
-      }
-    });
-  });
-}
-
-/**
- *
- * @param {string} filePath
- * @param {string} base64Data
- *
- * @returns {Promise<boolean>}
- */
-async function saveFile(filePath, base64Data) {
-  console.log("Salvando o arquivo: ", filePath);
-  return new Promise((resolve, reject) => {
-    fs.writeFile(
-      filePath,
-      base64Data.replace("data:image/jpeg;base64,", ""),
-      "base64",
-      (error) => {
-        if (error) {
-          reject(`Erro ao salvar o arquivo ${filePath}:`, error);
-        }
-
-        resolve(true);
-      }
-    );
-  });
-}
-
-/**
- *
- * @param {string} filePath
- * @param {number} timeDifference
- */
-async function changeImageCreationDate(filePath, timeDifference) {
-  console.log("Alterando data do arquivo: ", filePath);
-  const originalFile = await readFileAsBase64(filePath);
-
-  const exifObj = piexif.load(originalFile);
-  let exif = exifObj.Exif;
-  const dateTimeOriginal = convertTextExifDateToDateObject(
-    exif[piexif.ExifIFD.DateTimeOriginal]
-  );
-  const newDateTime = new Date(dateTimeOriginal.getTime() + timeDifference);
-
-  exif[piexif.ExifIFD.DateTimeOriginal] =
-    convertDateObjectToTextExifDate(newDateTime);
-
-  const exifStr = piexif.dump({ ...exifObj, Exif: exif });
-  const modifiedFile = piexif.insert(exifStr, originalFile);
-
-  const fileDir = path.dirname(filePath);
-  const fileName = path.basename(filePath);
-
-  try {
-    await saveFile(
-      path.resolve(`${fileDir}/modified_${fileName}`),
-      modifiedFile
-    );
-  } catch (error) {
-    throw new Error(error);
-  }
-}
-
-async function selectFile() {
-  return new Promise((resolve, reject) => {
-    child_process.exec(
-      path.resolve("src/openfiledialog.bat"),
-      (err, stdout, stderr) => {
-        if (err) {
-          reject(err);
-        }
-
-        if (
-          stdout === null ||
-          (typeof stdout === "string" && stdout.trim() === "null")
-        ) {
-          reject("Nenhum arquivo foi selecionado");
-        }
-
-        if (typeof stdout === "string") {
-          resolve(stdout.trim());
-        }
-
-        resolve(stdout);
-      }
-    );
-  });
-}
+import { getFileListFromDirectory } from "./utils/files/getFileListFromDirectory.js";
+import { getPhotoCreationDateMetadata } from "./utils/files/getPhotoCreationDateMetadata.js";
+import { readFileAsBase64 } from "./utils/files/readFileAsBase64.js";
+import { selectFile } from "./utils/files/selectFile.js";
 
 async function main() {
   try {
@@ -152,15 +22,8 @@ async function main() {
     const file1 = await readFileAsBase64(filePath1);
     const file2 = await readFileAsBase64(filePath2);
 
-    const exifFile1 = piexif.load(file1).Exif;
-    const exifFile2 = piexif.load(file2).Exif;
-
-    const creationDateFile1 = convertTextExifDateToDateObject(
-      exifFile1[piexif.ExifIFD.DateTimeOriginal]
-    );
-    const creationDateFile2 = convertTextExifDateToDateObject(
-      exifFile2[piexif.ExifIFD.DateTimeOriginal]
-    );
+    const creationDateFile1 = getPhotoCreationDateMetadata(file1);
+    const creationDateFile2 = getPhotoCreationDateMetadata(file2);
 
     let timeDifference = getDifferenceBetweenDates(
       creationDateFile1,
@@ -171,6 +34,8 @@ async function main() {
     const fileListFolder2 = await getFileListFromDirectory(fileDir2);
 
     if (fileListFolder1.length >= fileListFolder2.length) {
+      console.log("Alterando os arquivos da pasta: ", fileDir1);
+
       if (creationDateFile1 > creationDateFile2) {
         timeDifference = timeDifference * -1;
       }
@@ -182,6 +47,8 @@ async function main() {
     }
 
     if (fileListFolder2.length > fileListFolder1.length) {
+      console.log("Alterando os arquivos da pasta: ", fileDir2);
+
       if (creationDateFile2 > creationDateFile1) {
         timeDifference = timeDifference * -1;
       }
