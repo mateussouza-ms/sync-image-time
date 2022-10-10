@@ -1,6 +1,8 @@
 /**
  *
- * @param  strExifDate - format "2010:10:10 10:10:10"
+ * @param {string} strExifDate format "2010:10:10 10:10:10"
+ *
+ * @returns {Date} instance of Date
  */
 export function convertTextExifDateToDateObject(strExifDate) {
   if (typeof strExifDate !== "string") {
