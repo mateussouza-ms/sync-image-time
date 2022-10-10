@@ -11,9 +11,15 @@
   "keywords": [],
   "author": "Mateus Souza",
   "license": "ISC",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "dependencies": {
     "enquirer": "^2.3.6",
     "piexifjs": "^1.0.6"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "eslint": "^8.25.0",
+    "eslint-plugin-node": "^11.1.0"
+  }
 }
