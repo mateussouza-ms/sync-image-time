@@ -15,7 +15,6 @@
     "node": ">=14.0.0"
   },
   "dependencies": {
-    "enquirer": "^2.3.6",
     "piexifjs": "^1.0.6"
   },
   "devDependencies": {

@@ -1,4 +1,3 @@
-import enquirer from "enquirer";
 import child_process from "node:child_process";
 
 import * as fs from "fs";
@@ -111,29 +110,6 @@ async function changeImageCreationDate(filePath, timeDifference) {
   } catch (error) {
     throw new Error(error);
   }
-}
-
-async function selectFileEnquirer(path) {
-  const list = fs.readdirSync(path);
-
-  const response = await enquirer.prompt({
-    type: "select",
-    name: "selectedItem",
-    message: "Selecione o arquivo",
-    choices: list,
-  });
-
-  const selectedItem = response["selectedItem"];
-  const selectedItemPath = path.resolve(`${path}/${selectedItem}`);
-
-  var isFile =
-    fs.existsSync(selectedItemPath) && fs.lstatSync(selectedItemPath).isFile();
-
-  if (isFile) {
-    return selectedItemPath;
-  }
-
-  return await selectFileEnquirer(selectedItemPath);
 }
 
 async function selectFile() {
