@@ -3,7 +3,7 @@ import piexif from "piexifjs";
 
 import { convertDateObjectToTextExifDate } from "../dates/convertDateObjectToTextExifDate.js";
 import { convertTextExifDateToDateObject } from "../dates/convertTextExifDateToDateObject.js";
-import { readFileAsBase64 } from "./readFileAsBase64.js";
+import { readFile } from "./readFile.js";
 import { saveFile } from "./saveFile.js";
 
 /**
@@ -13,7 +13,7 @@ import { saveFile } from "./saveFile.js";
  */
 export async function changeImageCreationDate(filePath, timeDifference) {
   console.log("Alterando data do arquivo: ", filePath);
-  const originalFile = await readFileAsBase64(filePath);
+  const originalFile = await readFile(filePath);
 
   const exifObj = piexif.load(originalFile);
   let exif = exifObj.Exif;

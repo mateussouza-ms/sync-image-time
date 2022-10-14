@@ -5,7 +5,7 @@ import { changeImageCreationDate } from "./utils/files/changeImageCreationDate.j
 
 import { getFileListFromDirectory } from "./utils/files/getFileListFromDirectory.js";
 import { getPhotoCreationDateMetadata } from "./utils/files/getPhotoCreationDateMetadata.js";
-import { readFileAsBase64 } from "./utils/files/readFileAsBase64.js";
+import { readFile } from "./utils/files/readFile.js";
 import { selectFile } from "./utils/files/selectFile.js";
 
 async function main() {
@@ -19,8 +19,8 @@ async function main() {
     const fileDir1 = path.dirname(filePath1);
     const fileDir2 = path.dirname(filePath2);
 
-    const file1 = await readFileAsBase64(filePath1);
-    const file2 = await readFileAsBase64(filePath2);
+    const file1 = await readFile(filePath1);
+    const file2 = await readFile(filePath2);
 
     const creationDateFile1 = getPhotoCreationDateMetadata(file1);
     const creationDateFile2 = getPhotoCreationDateMetadata(file2);
